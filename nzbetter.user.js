@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name           NZBetter
 // @namespace      https://github.com/nzbetter/nzbetter
-// @version        0.6.1-dev
-// @description    A modification of NZ, that adds what is so missing.
+// @updateURL      https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
+// @downloadURL    https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
+// @version        0.6.2-dev
 // @description:ua Модифікація NZ, яка додає те, чого так бракує.
 // @author         n3tael
 // @match          https://nz.ua/*
@@ -68,8 +69,7 @@
     `);
 
     const defaultSettings = {
-        plugins: [],
-        customCSS: ""
+        plugins: []
     };
 
     let settings = GM_getValue("settings");
@@ -128,8 +128,7 @@
 
                     const mainContent = document.getElementsByClassName("content-wrapper")[0];
                     let updateSettings = {
-                        plugins: {},
-                        customCSS: "",
+                        plugins: {}
                     };
                     mainContent.replaceChildren();
 
