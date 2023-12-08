@@ -3,7 +3,7 @@
 // @namespace      https://github.com/nzbetter/nzbetter
 // @updateURL      https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
 // @downloadURL    https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
-// @version        0.6.2-dev
+// @version        0.6.3-dev
 // @description:ua Модифікація NZ, яка додає те, чого так бракує.
 // @author         n3tael
 // @match          https://nz.ua/*
@@ -21,7 +21,10 @@
 
 (function() {
     'use strict';
-    document.querySelector("html").style.display = "none"; // to prevent the page from being displayed until the mod is fully loaded
+    if (GM_getValue("settings").plugins?.DarkTheme?.enabled || false) {
+        document.querySelector("html").style.background = "#000"; // to prevent nz.ua flashbang
+    }
+    document.querySelector("html").style.opacity = 0; // to prevent the page from being displayed until the mod is fully loaded
 
     const l = new class Logger {
         _log(level, levelColor, args) {
@@ -90,12 +93,254 @@
 
     const Plugins = [
         {
+            name: "DarkTheme",
+            description: "Включає темну тему",
+            start: function() {
+                if (document.querySelector("html").classList.contains("h-100")) return; // do not apply dark theme to new landing because it makes text gray
+                GM_addStyle(`
+                  body { background: #000; color: #BAB8B8; }
+                  a { color: #3c8fd9; }
+                  h2.content-header { color: #2798ce; }
+                  h2.content-header-2 { color: #9B2100; }
+                  .grid { background: #000; }
+                  .wrapper { background-image: linear-gradient(to bottom, #171717, #000 800px); }
+                  input, select, textarea { color: #fff; background: #222; border: 1px solid #333; border-radius: 4px; }
+                  .ms-button { background-color: #121212; background-image: linear-gradient(to bottom, #121212, #292929) !important; }
+                  .submit .delete-lesson span { color: #BAB8B8; }
+                  .ms-button > span { color: #BAB8B8; background-color: #010101; background-image: linear-gradient(to bottom, #010101, #181818) !important; }
+                  .row label { color: #9B2100; }
+                  .pcf-textarea, .pcf-container { background-color: #040404; background-image: linear-gradient(to bottom, #040404, #0C0C0C); }
+                  .pcf-textarea > span, .pcf-container > span { background-color: #0a0a0a; background-image: linear-gradient(to bottom, #0a0a0a, #000); box-shadow: 0 -1px 1px #464545; }
+                  .pcf-textarea textarea, .pcf-container textarea { color: #B9B7B7; }
+                  .pcf-container input, .pcf-container select { color: #B9B7B7; }
+                  .pcf-container.error > span { background: #050505; }
+                  .tooltip .tooltip-inner { color: #000; background-color: #aaaaaa; border: 1px solid transparent; box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
+                  .tooltip.top .tooltip-arrow { border-top-color: #aaaaaa; }
+                  .popup { background: #000; border: 1px solid #171717; box-shadow: 0px 0px 10px #aaa; }
+                  .popup form h2 span { color: #9B2100; }
+                  .errorSummary { background: #feefeb; border: 1px solid #ef5128; }
+                  .is-guest { background: #000; }
+                  .is-guest .h-bottom { border-radius: 0 0 10px 10px; background: #181818; }
+                  .breadcrumb > li + li::before { color: #333; }
+                  .content { background: #000; }
+                  .sb-menu li a { color: #BABABA !important; }
+                  .sb-menu li.projects-menu a, .sb-menu li.reports-menu a { color: #BABABA; }
+                  .sb-menu hr { border-top: 1px #3d3d3d solid; }
+                  .sb-menu li a strong { color: #3c8fd9; }
+                  .sb-menu li.active a { background: #000 !important; }
+                  .sb-menu li a span:not(.count-messages) { filter: invert(1); }
+                  .sb-menu li.active a, .sb-menu li a:hover { color: #ef5128 !important; }
+                  .sb-menu li a:hover strong { color: #ef5128 !important; }
+                  .profile-block.brown-bg { background: #050505; }
+                  .profile-block.with-border { border-bottom: 1px solid #1d1d1d; }
+                  .profile-block > div > a { color: #3c8fd9 !important; }
+                  .profile-slogan { color: #a8a8a8; }
+                  .form-control { color: #fff; background-color: #111; border: 1px solid #333; }
+                  .panel { background-color: #222222; border: 1px solid transparent; }
+                  .nav-tabs { border-bottom: 1px solid #282828; }
+                  .nav-tabs > li > a { margin-right: 2px; line-height: 1.42857143; border: 1px solid transparent; border-radius: 4px 4px 0 0; }
+                  .nav-tabs > li > a:hover { border-color: transparent transparent #282828; }
+                  .nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus { color: #ffffff; cursor: default; background-color: #464646; border: 1px solid #282828; border-bottom-color: transparent; }
+                  .panel-default > .panel-heading { color: #BAB8B8; background-color: #3c3c3c; border-color: #282828; }
+                  .plugin-settings, .close { color: #eee !important; opacity: 0.8 !important; }
+                  .nav > li > a[role="tab"]:hover, .nav > li > a:focus { color: #fff; background-color: #2b2b2b; }
+                  .plugin-settings:hover, .close:hover, .plugin-settings:focus, .close:focus { color: #eee !important; opacity: 0.4 !important; }
+                  .modal-content { background-color: #202020; border: 1px solid #464646; }
+                  .modal-header { border-bottom: 1px solid #282828; }
+                  hr, .modal-footer { border-top: 1px solid #282828; }
+                  .btn-default { filter: invert(1); }
+                  div[style="border-bottom: 1px solid #e9e9e9; line-height: 28px;"], div[style="border-bottom: 1px solid #e9e9e9; line-height: 28px"] { border-bottom: 1px solid #2b2b2b !important; }
+                  .top-arrow-right.krest { background-image: url('../images/close-icon.png'); color: #888; filter: invert(1); }
+                  .pb-col { color: #a8a8a8; }
+                  .profile-links li a span { color: #a8a8a8; }
+                  .pl-school .profile-links li a:hover, .pl-school .profile-links li.active a { background: #154d68; }
+                  .pl-school .profile-links li a span { color: #ef5128; }
+                  .status-table-row.gray-bg { background: #0a0a0a }
+                  .profile-photo { background: none; }
+                  .profile-photo-albums li a { border: 1px solid #151515; background: #000; box-shadow: 0px 0px 2px #151515; }
+                  .messages h3 { color: #ef5128; }
+                  .pmf-col { color: #fff }
+                  .pmf-message-container { border: 1px solid #242424; background: #222; }
+                  .pmf-message { color: #8a8a8a; }
+                  .mla-image img { box-shadow: 0px 0px 2px #515151; }
+                  .ml-date { color: #a8a8a8; }
+                  .ml-photo a { border: 1px solid #212121; background: #000; }
+                  .ml-message { background: #1a1a1a; box-shadow: none; }
+                  .messages-list li ul .ml-message { background: #000; border: 1px solid #1a1a1a; }
+                  .cf-message-container { border: 1px solid #242424; background: #000; box-shadow: 0px 0px 10px #333; }
+                  .cf-message-container span, .ml-message .comment-arrow { filter: invert(1); }
+                  .cf-message-container textarea, .cf-message-container input { background: #000; color: #fff; }
+                  .white-button { background: #000; color: #B9B6B6; }
+                  .messages-list li ul .white-button:hover { color: #464545; }
+                  .mp-header { background: transparent; border-bottom: 1px solid #242424; }
+                  .mph-nav li a { border-top: 1px solid #DBDBDB; border-left: 1px solid #DBDBDB; border-bottom: 1px solid #DBDBDB; }
+                  .mph-nav li a span { filter: invert(1); }
+                  .mph-nav li.active a { background-color: #000; border-bottom-color: #000; }
+                  .mph-nav li a:hover, .mph-nav li.active a { color: #ef5128; }
+                  #ss-form, #user-search-form { background: #111; }
+                  .ssf-button, .get_folder, .mph-nav > li { filter: invert(1); }
+                  .get_folder span, .mph-nav > li > a span { filter: invert(0) !important; }
+                  .mph-nav li.active a { background-color: #fff; border-bottom-color: #fff; }
+                  .mph-nav li a:hover, .mph-nav li.active a { color: #10aed7; }
+                  .messages-table td.sender-col a { color: #B9B6B6; }
+                  .messages-table .not-read td.sender-col a { color: #ef5128; }
+                  .messages-table td.title-col a { color: #B9B6B6; }
+                  .messages-table .not-even { border: 1px solid #0e0e0e; }
+                  .messages-table .not-even td { background: #060606; }
+                  .message-text { background: #0f0f0f; }
+                  #search_journal { color: #fff; }
+                  .journal-choose tr td { border-top: 1px solid #0a0a0a; }
+                  .journal-choose tr.tr-hover td { background: #0a0a0a; }
+                  .journal-choose tr td a:hover { background: #ef5028; color: #fff; border-color: #ef5028; }
+                  .schedule-table thead tr td span { color: #fff; }
+                  .schedule-table thead tr td span.sth-today { color: #ef5128; }
+                  .schedule-table thead tr td span.sth-date { color: #777; }
+                  .schedule-table thead tr td.holiday-day span, .schedule-table thead td.holiday-day span.sth-date { color: #272727; }
+                  .time-col span { color: #B9B6B6; }
+                  .time-col span.tc-number { color: #fff; }
+                  .time-col span.tc-now { color: #ef5128; }
+                  .tc-current-time .time-col span.tc-number { color: #ef5128; }
+                  .schedule-item { background: #111; border: 1px solid #000; box-shadow: none; }
+                  .schedule-item.si-hover, .today-col .schedule-item.si-hover, .tc-current-time .today-col .schedule-item.si-hover { background: #ef5128; color: #000; }
+                  .schedule-item.si-hover a, .today-col .schedule-item.si-hover a { color: #000; }
+                  .today-col .schedule-item { background: #090807; }
+                  .tc-current-time .today-col .schedule-item { background: #1C1715; color: #fff; }
+                  .schedule-item .si-title a.sit-class { color: #154D68; background: #000; }
+                  .schedule-item .si-title a.sit-class:hover { background: #2B1915; color: #000; }
+                  .schedule-item .sit-aud { color: #9B2100; }
+                  .arrow-left-link, .arrow-right-link { color: #ef5128; }
+                  .view-links > .row a:not(.active), .view-links a:not(.active, .ms-button) { filter: invert(1); }
+                  .dropdown-menu { background-color: #181818; }
+                  .prev-next-links a { color: #ef5128; }
+                  .prev-next-links-2 > a, .prev-next-links-2 > button { filter: invert(1); }
+                  .point-table.pt-teacher thead td.pt-theme { color: #777; }
+                  .point-table thead td.pt-holiday { color: #161616; }
+                  .point-table thead td.pt-point, .point-table thead td.pt-pre-point { border-bottom: 1px solid #161616; }
+                  .point-table.pt-teacher tbody td.pt-red-line, .point-table.pt-teacher thead td.pt-red-line { border-left: 1px solid #080504 !important }
+                  .point-table thead td.pt-point, .point-table tbody td.pt-point { border: 1px solid #161616; }
+                  .point-table tbody tr:hover { background: #111; }
+                  .point-table col.pt-hover { background: #0a0a0a; }
+                  .point-table thead td.pt-hover { background: #000; color: #ef5128; border-bottom-color: #fff; }
+                  .point-table thead td > span span.pt-month { color: #ef5128; }
+                  .point-table .pt-kr-head { color: #ef5128; }
+                  .point-table .pt-tr-head { color: #1daa5a; }
+                  .point-table .pt-sem-head { color: #441daa; }
+                  .point-table tbody td.pt-kr { background: #040404; }
+                  .point-table tbody td.pt-tr { background: #080909; }
+                  .point-table tbody td.pt-sem { background: #181819; }
+                  .point-table.pt-teacher thead td.pt-point { border-top: 1px solid #161616; border-left: 1px solid #161616; }
+                  .point-table.pt-teacher thead td.ptp-end { border-right: 1px solid #161616; }
+                  .point-table.pt-teacher thead td.pt-hover { border-bottom-color: #fff }
+                  .point-table tbody tr:not(.c-leave) td.pt-theme:before { background: linear-gradient(to right, transparent, #000); }
+                  .point-table.pt-teacher tbody td.pt-point { border-left: 1px solid #161616; }
+                  .point-table.pt-teacher tbody td.pt-point:last-child { border-right: 1px solid #161616; }
+                  .point-table .c-leave td { background: #141414 !important; border: 1px solid #161616; }
+                  #who_rated { color: #9B2100; }
+                  .processing { background-color: yellow; }
+                  .failture { background-color: red; }
+                  .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-1 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-2 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-3 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-4 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-5 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-6 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-7 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-8 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-9 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-10 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-11 input, .point-table.pt-teacher tbody tr.pt-tr-hover td.pt-hover.point-12 input, .point-table.pt-teacher tbody tr td.pt-input.point-1 input, .point-table.pt-teacher tbody tr td.pt-input.point-2 input, .point-table.pt-teacher tbody tr td.pt-input.point-3 input, .point-table.pt-teacher tbody tr td.pt-input.point-4 input, .point-table.pt-teacher tbody tr td.pt-input.point-5 input, .point-table.pt-teacher tbody tr td.pt-input.point-6 input, .point-table.pt-teacher tbody tr td.pt-input.point-7 input, .point-table.pt-teacher tbody tr td.pt-input.point-8 input, .point-table.pt-teacher tbody tr td.pt-input.point-9 input, .point-table.pt-teacher tbody tr td.pt-input.point-10 input, .point-table.pt-teacher tbody tr td.pt-input.point-11 input, .point-table.pt-teacher tbody tr td.pt-input.point-12 input { color: #000 }
+                  .point-table.pt-teacher thead td.ptp-today { border-top: 1px solid #363636; border-left: 1px solid #363636; border-right: 1px solid #363636; color: #ef5128; }
+                  .point-table.pt-teacher tbody td.ptp-today { border-left: 1px solid #363636; border-right: 1px solid #363636; }
+                  .point-table thead td.ptp-today, .point-table tbody td.ptp-today { border-right: 1px solid red; }
+                  .point-table thead td.ptp-today { color: red; }
+                  .point-change { background: #000; border: 1px solid #1A1A1A; box-shadow: 0px 0px 10px #525252; }
+                  .pc-points a { color: #B9B6B6; }
+                  .pc-form { border-top: 1px solid #161616 }
+                  .pcf-point-line { color: #641500; }
+                  .journal-avg-table td { border: 1px solid #161616; }
+                  .dz-header { color: #777; }
+                  .dz-container li { background: #050505; box-shadow: none; }
+                  .dzc-date { color: #9B2100; border-right: 1px solid #494949; }
+                  .dzc-lesson-number { border-right: 1px solid #494949; }
+                  .dzc-date span { color: #ef5128 }
+                  .dzc-theme { border-right: 1px solid #494949; }
+                  .view-links { color: #777; }
+                  .dni-arrow-left { color: #ef5128; }
+                  .dni-arrow-right { color: #ef5128; }
+                  .dn-item h3 { color: #9B2100; }
+                  .dn-item.dni-today-tomorrow h3 { color: #ef5128 }
+                  .dnip-number { color: #fff; }
+                  li.dnip-now .dnip-number { color: #ef5128 }
+                  .dnip-now-text { color: #ef5128 }
+                  .dnip-data { background: #111; box-shadow: none; }
+                  .dn-item.dni-today-tomorrow .dnip-data { background: #0C0C0B; }
+                  .dn-item.dni-today-tomorrow li.dnip-now .dnip-data { background: #100F0D; }
+                  .part-left span { color: #9B2100; }
+                  .separated-horizontal { border-bottom: 1px dashed #4A4A4A; }
+                  .dnip-right.have-comment { background: url('../images/point-corner-2.png') 100% 0 no-repeat #000; }
+                  .dnip-right { background-color: #000; }
+                  .rs-block { background: #000; box-shadow: none; outline: 1px solid #111; }
+                  .kp-text { color: #A8A8A8; }
+                  .adv-list li a span { color: #A8A8A8; }
+                  .adv-list li a span.adv-header { color: #154D68; }
+                  .sb-home-work { color: #A8A8A8 }
+                  .sb-home-work li li { border-top: 1px solid #0F0F0F; }
+                  .hometask-attachments > div > a > img { filter: invert(1); }
+                  .sbhw-title { border-top: 1px solid #0F0F0F; }
+                  .sb-last-rates { color: #A8A8A8; }
+                  .sb-last-rates li { border-top: 1px solid #0F0F0F }
+                  .sb-last-rates .sblr-left { border-right: 1px solid #090808; }
+                  .gray-button { background: #111; color: #888888; border: #202020; border-bottom-color: #101010; }
+                  .row .label { color: #9B2100 }
+                  .col .row label { color: #A8A8A8; }
+                  .gray-inline-block { background: #0A0A0A; }
+                  .gray-block { background: #0A0A0A; box-shadow: none; }
+                  .us-left h2, .us-right h2 { color: #9B2100; }
+                  .us-delete span { color: #A8A8A8; }
+                  .psl-menu li.active a { background: #206f96; color: #000 }
+                  .founded { color: #777; }
+                  .psri-address { color: #777; }
+                  .school-gallery li a img { box-shadow: 1px 1px 4px #525252; }
+                  .create-soobsh-right { color: #888 }
+                  .created-soobsh-header { color: #ef5128 }
+                  .soobsh-data { color: #777 }
+                  .soobsh-data h3 { border-bottom: 1px solid #161616; color: #9B2100 }
+                  .soobsh-data h3 a { color: #9B2100 }
+                  .invitation-soobsh-list li span { color: #9B2100 }
+                  .news-list li h3 { color: #9B2100; border-bottom: 1px solid #161616; }
+                  .news-image { background: #000; border: 1px solid #212121; }
+                  .news-item h2 a { color: #1f7097; }
+                  .news-item h2.a { color: #1f7097; }
+                  .lge-item h3 { color: #9B2100; border-bottom: 1px solid #161616; }
+                  .lge-item h3.active { color: #ef5128; }
+                  .lge-item h3 a { color: #9B2100; }
+                  .lge-item h3.active a { color: #ef5128; }
+                  .pl-image img { box-shadow: 1px 1px 4px #525252; }
+                  .paginator li a { color: #B9B6B6; border: 1px solid #151515; }
+                  .paginator li a:hover, .paginator li.selected a, .paginator li.active a { color: #000; background: #ef5020; border-color: #ef5020 }
+                  .footer-wrapper { background-image: linear-gradient(to right, #181818, #000); background-color: #181818; }
+                  .footer-left a { color: #ef5128; }
+                  .footer-left span { color: #9B2100; }
+                  .footer-right ul li a { color: #2A99CE; }
+                  .gallery-top { border-bottom: 1px solid #0F0F0F; }
+                  .gt-item { border: 1px solid #151515; box-shadow: 1px 1px 4px #525252; }
+                  blockquote { background: none repeat scroll 0 0 #030303; border-color: #999 #999 #999 #FF5A00; color: #ccc; }
+                  .pt-point .tooltiptext, .dnip-right .tooltiptext { background-color: #aaa; color: #000; }
+                  .pt-point .tooltiptext::after, .dnip-right .tooltiptext::after { border-top-color: #aaa; }
+                  .main-info-content { background: #050505; }
+                  .region-navigation { background-color: #050505; }
+                  .school-wall-table td { border: 1px solid #2A99CE; background: #080808; }
+                  .add-news { color: #000; background: #ef5028; box-shadow: 0px 0px 2px #000; }
+                  .add-news:hover { color: #000; background-color: #f23a0c; filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e33c12', endColorstr='#e33c12', GradientType=0); background-image: linear-gradient(top, #f23a0c 0%, #e33c12 100%); box-shadow: 0px 0px 2px #000; }
+                  .add-news:active { color: #000; background-color: #ef2828; filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fc0d0d', endColorstr='#fc0d0d', GradientType=0); background-image: linear-gradient(top, #ef2828 0%, #fc0d0d 100%); box-shadow: 0px 0px 2px #000; }
+                  #form-add-journals label.checked-all-label, #form-add-journals label.checked-half-label { color: #2A99CE; }
+                  .mce-content-body { background: #fff; color: #000; }
+                  .wg-birth li { border-bottom: 1px solid #0F0F0F; }
+                  .user-list-popup { background: #000; border: 1px solid #1A1A1A; box-shadow: 0px 0px 10px #525252; }
+                  .user-list-popup ul li { border-bottom: 1px solid #0F0F0F; }
+                  .hometask-content { border: .2em solid #161616; }
+                  .journal-remark-tbl td, .journal-remark-tbl th, .journal-remark-tbl tr { border: 1px solid #222; }
+                  .font-size-btns .font-size-dec, .font-size-btns .font-size-inc { border: 2px solid #fff; background: #000; }
+                `);
+            }
+        },
+        {
             name: "Settings",
             description: "Додає налаштування модифікації",
             required: true,
             start: function () {
                 if (!document.querySelector(".sb-menu") && !document.querySelector(".content-wrapper")) return;
-                if (!settings.plugins.BetterSideMenu?.enabled) {
+                if (!settings.plugins.BetterSideMenu?.enabled || settings.plugins.BetterSideMenu?.enabled && !(settings.plugins.BetterSideMenu?.options?.menuItems?.includes("nzbetter") || false)) {
                     const menu = GM_addElement(document.getElementsByClassName("sb-menu")[0], "li", { class: 'reports-menu', id: "nzbetter-menu" });
                     const openSettingsButton = GM_addElement(menu, "a", {
                         href: "#",
@@ -204,10 +449,14 @@
                       align-items: center;
                       justify-content: space-between;
                     }
-                    .option-string, .option-select {
+                    .option-string, .option-select, .option-color {
                       display: flex;
                       flex-direction: column;
                       gap: 4px;
+                    }
+                    .option-color > input {
+                      height: 32px;
+                      padding: 0;
                     }
                     .form-control {
                       height: unset;
@@ -397,7 +646,6 @@
                             });
                             modalPluginSettingsSaveButton.addEventListener("click", () => {
                                 updateSettings = mergeSettings(updateSettings, updatePluginSettings);
-                                l.debug("updateSettings:", updateSettings);
                             });
 
                             const modalPluginSettingsOptions = GM_addElement(modalPluginSettingsBody, "div", { class: "options" });
@@ -410,13 +658,19 @@
                                         booleanOptionSwitch.checked = settings.plugins[plugin.name]?.options?.[option.name] || option.defaultValue;
                                         booleanOptionSwitch.addEventListener("change", (e) => {
                                             updatePluginSettings.plugins[plugin.name].options[option.name] = e.target.checked;
-                                            l.debug(updatePluginSettings);
                                         });
 
                                         var booleanOptionName = GM_addElement(booleanOptionInfo, "b", { textContent: option.displayName });
                                         var booleanOptionDescription = GM_addElement(booleanOptionInfo, "p", { textContent: option.description });
                                         break;
-                                    case "number":
+                                    case "color":
+                                        var colorOption = GM_addElement(modalPluginSettingsOptions, "div", { class: "option-color" });
+                                        var colorOptionDescription = GM_addElement(colorOption, "b", { textContent: option.description });
+                                        var colorOptionInput = GM_addElement(colorOption, "input", { type: "color", class: "form-control" });
+                                        colorOptionInput.value = settings.plugins[plugin.name]?.options?.[option.name] || option.defaultValue;
+                                        colorOptionInput.addEventListener("change", (e) => {
+                                            updatePluginSettings.plugins[plugin.name].options[option.name] = e.target.value;
+                                        });
                                         break;
                                     case "string":
                                         var stringOption = GM_addElement(modalPluginSettingsOptions, "div", { class: "option-string" });
@@ -711,9 +965,9 @@
                         }
 
                         function grabCurrent() {
+                            updatePluginSettings.plugins[plugin.name].options.menuItems = [];
                             Array.from(document.getElementsByClassName("betterSideMenu-options")[0].children).forEach(option => {
                                 if (option.value === "null") return;
-                                settings.plugins[plugin.name].options.menuItems = [];
                                 if (!updatePluginSettings.plugins[plugin.name].options.menuItems) updatePluginSettings.plugins[plugin.name].options.menuItems = [];
                                 updatePluginSettings.plugins[plugin.name].options.menuItems.push(option.value);
                             });
@@ -729,7 +983,7 @@
                 if (!document.querySelector(".sb-menu")) return;
                 const plugin = Plugins.find(plugin => plugin.name === "BetterSideMenu");
 
-                if (settings.plugins[plugin.name]?.options.fixBlinkAnimation) {
+                if (settings.plugins[plugin.name]?.options?.fixBlinkAnimation) {
                     GM_addStyle(`
                       @keyframes blink-count-messages {
                         0% { opacity: 0; }
@@ -1078,8 +1332,16 @@
             }
         },
         {
+            name: "AutoOpenLoginPage",
+            description: "Автоматично відкриває панель авторизації на головній сторінці",
+            start: function() {
+                const loginPopup = document.querySelector("div.login.js--login-popup");
+                if (loginPopup) loginPopup.classList.add("login--show");
+            }
+        },
+        {
             name: "HeaderEdit",
-            description: "Змінює назву сайту зверху, додає можливиість скрти непотрібну кнопку",
+            description: "Змінює назву сайту зверху, додає можливиість скрти непотрібну кнопку і міняє градієнт на обраний користувачем колір",
             options: [
                 {
                     type: "string",
@@ -1093,19 +1355,47 @@
                     displayName: "Скрити кнопку \"Людям із порушеннями зору\"",
                     description: "Ця функція не збільшує потрібні елементи, то навіщо вона?",
                     defaultValue: false
+                },
+                {
+                    type: "boolean",
+                    name: "enableCustomColor",
+                    displayName: "Замінити градієнт (картинку) на свій колір",
+                    description: "Включити заміну кольору на свій",
+                    defaultValue: false
+                },
+                {
+                    type: "color",
+                    name: "headerCustomColor",
+                    description: "Свій колір у шапці сайту (потребує включення опції зверху)",
+                    defaultValue: "#000"
+                },
+                {
+                    type: "boolean",
+                    name: "headerInvertElements",
+                    displayName: "Зробити чорними елементи шапки?",
+                    description: "Деякі кольори фону не поєднуються з білими іконками, тому ця опція зробе їх чорними",
+                    defaultValue: false
                 }
             ],
             start: function() {
                 if (!document.querySelector(".h-top")) return;
+                const pluginSettings = settings.plugins[this.name]?.options;
 
-                if (settings.plugins[this.name]?.options?.siteHeaderName) {
+                if (pluginSettings?.siteHeaderName) {
                     document.querySelector(".logo").textContent = settings.plugins[this.name]?.options?.siteHeaderName;
                 }
 
-                if (settings.plugins[this.name]?.options?.changeVisionHide && document.querySelector("#changeVision")) {
+                if (pluginSettings?.changeVisionHide && document.querySelector("#changeVision")) {
                     GM_addStyle(".h-top { height: 1.87rem; }");
                     document.querySelector("#changeVision").remove();
+                    document.querySelector(".font-size-btns").remove();
                 }
+
+                if (pluginSettings?.enableCustomColor && pluginSettings?.headerCustomColor) {
+                    document.querySelector(".h-top").style.background = pluginSettings.headerCustomColor;
+                }
+
+                if (pluginSettings?.headerInvertElements) GM_addStyle(`.h-top > * { filter: invert(1); }`);
             }
         },
         {
@@ -1196,7 +1486,8 @@
     document.addEventListener("DOMContentLoaded", async () => {
         l.info("DOM Content loaded, starting plugins...");
         await startAllPlugins();
-        document.querySelector("html").style.display = "";
+        document.querySelector("html").style.background = null;
+        document.querySelector("html").style.opacity = null;
         l.info("Plugins started. Page displayed.");
     })
 
