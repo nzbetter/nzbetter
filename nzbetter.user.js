@@ -3,7 +3,7 @@
 // @namespace      https://github.com/nzbetter/nzbetter
 // @updateURL      https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
 // @downloadURL    https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
-// @version        0.6.3-dev
+// @version        0.6.3.1-dev
 // @description:ua Модифікація NZ, яка додає те, чого так бракує.
 // @author         n3tael
 // @match          https://nz.ua/*
@@ -21,7 +21,7 @@
 
 (function() {
     'use strict';
-    if (GM_getValue("settings").plugins?.DarkTheme?.enabled || false) {
+    if (GM_getValue("settings")?.plugins?.DarkTheme?.enabled || false) {
         document.querySelector("html").style.background = "#000"; // to prevent nz.ua flashbang
     }
     document.querySelector("html").style.opacity = 0; // to prevent the page from being displayed until the mod is fully loaded
