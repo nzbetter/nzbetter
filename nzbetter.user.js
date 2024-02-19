@@ -3,7 +3,7 @@
 // @namespace      https://github.com/nzbetter/nzbetter
 // @updateURL      https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
 // @downloadURL    https://github.com/nzbetter/nzbetter/raw/dev/nzbetter.user.js
-// @version        0.6.3.1-dev
+// @version        0.6.4-dev
 // @description:ua Модифікація NZ, яка додає те, чого так бракує.
 // @author         n3tael
 // @match          https://nz.ua/*
@@ -95,7 +95,7 @@
         {
             name: "DarkTheme",
             description: "Включає темну тему",
-            start: function() {
+            start: async function() {
                 if (document.querySelector("html").classList.contains("h-100")) return; // do not apply dark theme to new landing because it makes text gray
                 GM_addStyle(`
                   body { background: #000; color: #BAB8B8; }
@@ -122,6 +122,7 @@
                   .is-guest { background: #000; }
                   .is-guest .h-bottom { border-radius: 0 0 10px 10px; background: #181818; }
                   .breadcrumb > li + li::before { color: #333; }
+                  .form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control { background-color: #333; }
                   .content { background: #000; }
                   .sb-menu li a { color: #BABABA !important; }
                   .sb-menu li.projects-menu a, .sb-menu li.reports-menu a { color: #BABABA; }
@@ -155,6 +156,7 @@
                   .profile-links li a span { color: #a8a8a8; }
                   .pl-school .profile-links li a:hover, .pl-school .profile-links li.active a { background: #154d68; }
                   .pl-school .profile-links li a span { color: #ef5128; }
+                  table, td, th { border: 1px solid #222 !important; }
                   .status-table-row.gray-bg { background: #0a0a0a }
                   .profile-photo { background: none; }
                   .profile-photo-albums li a { border: 1px solid #151515; background: #000; box-shadow: 0px 0px 2px #151515; }
@@ -341,7 +343,7 @@
             start: function () {
                 if (!document.querySelector(".sb-menu") && !document.querySelector(".content-wrapper")) return;
                 if (!settings.plugins.BetterSideMenu?.enabled || settings.plugins.BetterSideMenu?.enabled && !(settings.plugins.BetterSideMenu?.options?.menuItems?.includes("nzbetter") || false)) {
-                    const menu = GM_addElement(document.getElementsByClassName("sb-menu")[0], "li", { class: 'reports-menu', id: "nzbetter-menu" });
+                    const menu = GM_addElement(document.querySelector(".sb-menu"), "li", { class: 'reports-menu', id: "nzbetter-menu" });
                     const openSettingsButton = GM_addElement(menu, "a", {
                         href: "#",
                         id: "nzbetter-button"
@@ -351,13 +353,20 @@
                 }
 
                 function mergeSettings(current, update) {
-                    for (const key in update) {
-                        if (update[key] instanceof Object) {
-                            Object.assign(update[key], mergeSettings(current?.[key], update[key]));
+                    if (Object.keys(current).length === 0) return update;
+
+                    for (let key in update) {
+                        if (!(key in current)) {
+                            current[key] = update[key];
+                        } else {
+                            if (typeof update[key] === 'object' && !Array.isArray(update[key])) {
+                                current[key] = mergeSettings(current[key], update[key]);
+                            } else {
+                                current[key] = update[key];
+                            }
                         }
                     }
 
-                    Object.assign(current || {}, update);
                     return current;
                 }
 
@@ -368,7 +377,7 @@
                 }
 
                 function openSettings() {
-                    document.getElementsByClassName("active")[0]?.classList?.remove("active");
+                    document.querySelector(".active")?.classList?.remove("active");
                     document.getElementById("nzbetter-menu")?.classList.add("active");
 
                     const mainContent = document.getElementsByClassName("content-wrapper")[0];
@@ -568,11 +577,10 @@
                         }
                     });
 
-                    const quickActionsPanelTGChannelLink = GM_addElement(quickActionsPanelContainer, "a", { href: "https://t.me/nzbetter" }); // Telegram Link
+                    const quickActionsPanelTGChannelLink = GM_addElement(quickActionsPanelContainer, "a", { href: "https://t.me/nzbetter", target: "_blank" }); // Telegram Link
                     GM_addElement(quickActionsPanelTGChannelLink, "button", { class: "btn btn-primary", textContent: "Телеграм-канал" }); // Telegram button
-                    const quickActionsPanelGithubLink = GM_addElement(quickActionsPanelContainer, "a", { href: "https://github.com/nzbetter/nzbetter" }); // Github Link
+                    const quickActionsPanelGithubLink = GM_addElement(quickActionsPanelContainer, "a", { href: "https://github.com/nzbetter/nzbetter", target: "_blank" }); // Github Link
                     GM_addElement(quickActionsPanelGithubLink, "button", { class: "btn btn-primary", textContent: "GitHub" }); // Github button
-
 
                     const tabPlugins = GM_addElement(tabContent, "div", {
                         role: "tabpanel",
@@ -699,7 +707,7 @@
                                     case "component":
                                         var componentOption = GM_addElement(modalPluginSettingsOptions, "div", { class: "option-component" });
                                                 try {
-                                                    option.component(componentOption, updatePluginSettings);
+                                                    option.component(componentOption, updatePluginSettings.plugins[plugin.name].options);
                                                 } catch (e) {
                                                     l.error(`Failed to render component option ${option.name} in ${plugin.name}\n`, e);
                                                 }
@@ -932,6 +940,26 @@
                           gap: 4px;
                           flex-direction: column;
                         }
+                        .betterSideMenu-option-container {
+                          display: flex;
+                          gap: 4px;
+                          align-items: center;
+                        }
+                        .betterSideMenu-option-container select {
+                          width: 100%
+                        }
+                        .betterSideMenu-queue-select {
+                          display: flex;
+                          flex-direction: column;
+                        }
+                        .betterSideMenu-queue-select button:first-child {
+                          border-bottom: none;
+                          border-radius: 4px 4px 0 0;
+                        }
+                        .betterSideMenu-queue-select button:last-child {
+                          border-top: none;
+                          border-radius: 0 0 4px 4px;
+                        }
                         `);
 
                         let componentOptionContainer = GM_addElement(componentOption, "div", { class: "betterSideMenu-container" });
@@ -939,40 +967,49 @@
                         let componentOptionAddSelectButton = GM_addElement(componentOptionContainer, "button", { class: "btn btn-default btn-xs", textContent: "+" });
                         let componentOptionOptions = GM_addElement(componentOption, "div", { class: "betterSideMenu-options"});
 
-                        const plugin = Plugins.find(plugin => plugin.name === "BetterSideMenu");
                         function loadExistingSelects() {
-                            if (!settings.plugins[plugin.name]?.options?.menuItems?.length || settings.plugins[plugin.name]?.options?.menuItems?.length == 0) return;
-                            settings.plugins[plugin.name].options.menuItems.forEach(option => {
-                                let selectOptionInput = GM_addElement(componentOptionOptions, "select", { class: "form-control" });
-                                selectMenuItems.forEach(item => {
-                                    let selectOption = GM_addElement(selectOptionInput, "option", {
-                                        value: item.value,
-                                        textContent: item.label
-                                    });
-                                });
-                                selectOptionInput.value = option;
+                            if (!getPluginSettings("BetterSideMenu")?.menuItems?.length || getPluginSettings("BetterSideMenu")?.menuItems?.length == 0) return;
+                            getPluginSettings("BetterSideMenu").menuItems.forEach(option => {
+                                addSelect(selectMenuItems.indexOf(selectMenuItems.find(item => item.value === option)));
                             });
                         }
-                        function addSelect() {
-                            let selectOptionInput = GM_addElement(componentOptionOptions, "select", { class: "form-control" });
+
+                        function addSelect(selected) {
+                            let optionContainer = GM_addElement(componentOptionOptions, "div", { class: "betterSideMenu-option-container" });
+                            let queueSelect = GM_addElement(optionContainer, "div", { class: "betterSideMenu-queue-select" });
+
+                            let buttonUp = GM_addElement(queueSelect, "button", { class: "btn btn-default btn-xs" });
+                            buttonUp.innerHTML = '<span class="glyphicon glyphicon-chevron-up"></span>';
+                            buttonUp.addEventListener("click", () => componentOptionOptions.insertBefore(optionContainer, optionContainer.previousElementSibling));
+
+                            let buttonDown = GM_addElement(queueSelect, "button", { class: "btn btn-default btn-xs" });
+                            buttonDown.innerHTML = '<span class="glyphicon glyphicon-chevron-down"></span>';
+                            buttonDown.addEventListener("click", () => componentOptionOptions.insertBefore(optionContainer.nextElementSibling, optionContainer));
+
+                            let selectOptionInput = GM_addElement(optionContainer, "select", { class: "form-control" });
                             selectMenuItems.forEach(item => {
                                 let selectOption = GM_addElement(selectOptionInput, "option", {
                                     value: item.value,
                                     textContent: item.label
                                 });
-                                selectOption.selected = item.default;
+                                selectOptionInput.selectedIndex = selected || 0;
                             });
+
+                            let removeButton = GM_addElement(optionContainer, "button", { class: "btn btn-default btn-xs" });
+                            removeButton.innerHTML = '<span class="glyphicon glyphicon-trash"></span>';
+                            removeButton.addEventListener("click", () => optionContainer.remove());
                         }
 
                         function grabCurrent() {
-                            updatePluginSettings.plugins[plugin.name].options.menuItems = [];
-                            Array.from(document.getElementsByClassName("betterSideMenu-options")[0].children).forEach(option => {
-                                if (option.value === "null") return;
-                                if (!updatePluginSettings.plugins[plugin.name].options.menuItems) updatePluginSettings.plugins[plugin.name].options.menuItems = [];
-                                updatePluginSettings.plugins[plugin.name].options.menuItems.push(option.value);
+                            updatePluginSettings.menuItems = [];
+                            Array.from(document.querySelector(".betterSideMenu-options").children).forEach(option => {
+                                let selected = option.children[1].selectedOptions[0].value;
+                                if (selected == "null") return;
+                                if (!updatePluginSettings.menuItems) updatePluginSettings.menuItems = [];
+                                updatePluginSettings.menuItems.push(option.children[1].selectedOptions[0].value);
                             });
                         }
-                        document.getElementById("modalPlugin"+plugin.name+"SaveButton").addEventListener("click", grabCurrent);
+                        document.getElementById("modalPluginBetterSideMenuSaveButton").addEventListener("click", grabCurrent);
 
                         componentOptionAddSelectButton.addEventListener("click", () => addSelect());
                         loadExistingSelects();
@@ -981,9 +1018,7 @@
             ],
             start: function () {
                 if (!document.querySelector(".sb-menu")) return;
-                const plugin = Plugins.find(plugin => plugin.name === "BetterSideMenu");
-
-                if (settings.plugins[plugin.name]?.options?.fixBlinkAnimation) {
+                if (getPluginSettings(this.name)?.fixBlinkAnimation) {
                     GM_addStyle(`
                       @keyframes blink-count-messages {
                         0% { opacity: 0; }
@@ -1021,14 +1056,15 @@
 
                 const dynamicSettings = [];
 
+                if (!document.querySelector(".profile-menu")) return;
                 dynamicSettings.push(
                     {
                         name: "profile",
-                        link: document.getElementsByClassName("profile-menu")[0].children[0].pathname // link to our profile
+                        link: document.querySelector(".profile-menu")?.children[0]?.pathname // link to our profile
                     },
                     {
                         name: "schedule",
-                        link: document.getElementsByClassName("schedule-menu")[0].children[0].pathname
+                        link: document.querySelector(".schedule-menu")?.children[0]?.pathname
                     }
                 );
 
@@ -1053,10 +1089,12 @@
                     });
                 };
 
-                if (!settings.plugins[plugin.name]?.options?.menuItems) return;
-                const sbMenu = document.getElementsByClassName("sb-menu")[0];
+                if (!getPluginSettings(this.name)?.menuItems) return;
+
+                const sbMenu = document.querySelector(".sb-menu");
                 sbMenu.replaceChildren();
-                settings.plugins[plugin.name].options.menuItems.forEach(item => {
+
+                getPluginSettings(this.name).menuItems.forEach(item => {
                     if (item == "separator") {
                         GM_addElement(sbMenu, "hr");
                         return;
@@ -1265,6 +1303,12 @@
                 },
                 {
                     type: "boolean",
+                    name: "collapseBlocks",
+                    displayName: "Можливість згортати блоки",
+                    description: "Додає можливість згортати блоки, кліком по назві блоку"
+                },
+                {
+                    type: "boolean",
                     name: "techSupportButtonHide",
                     displayName: "Скрити кнопку тех. підтримка",
                     description: "Скриває кнопку технічної підтримки, хтось цим користується?"
@@ -1289,7 +1333,7 @@
                 }
                 `);
 
-                const options = settings.plugins[this.name]?.options;
+                const options = getPluginSettings(this.name);
                 for (const option in options) {
                     var element;
                     switch (option) {
@@ -1322,12 +1366,35 @@
                     }
                 };
 
-                if (settings.plugins[this.name]?.options?.techSupportButtonHide) {
+                if (getPluginSettings(this.name)?.techSupportButtonHide) {
                     document.querySelector("button[data-target='#support-modal']").remove();
                     document.querySelector("#support-modal").remove();
                 }
-                if (settings.plugins[this.name]?.options?.advListHide) {
+
+                if (getPluginSettings(this.name)?.advListHide) {
                     document.querySelector("ul.adv-list").parentElement.remove();
+                }
+
+                if (getPluginSettings(this.name)?.collapseBlocks) {
+                    let blocks = document.querySelectorAll("div.rs-block");
+
+                    GM_addStyle(`.rs-block { padding: 0 }
+                        .rs-block h2 { margin-left: 0; margin-right: 0; }
+                        .rs-block > details summary h2 { user-select: none }
+                        .rs-block > details:not([open]) summary h2 { border-radius: 10px }
+                        .rs-block > details > ul { padding: 0 10px 7px; margin: 0; }`
+                    );
+
+                    blocks.forEach(block => {
+                        let details = GM_addElement(block, "details", {
+                            open: ""
+                        });
+                        let summary = GM_addElement(details, "summary");
+                        summary.appendChild(block.children[0]);
+                        while (block.children[0].localName !== "details") {
+                            details.appendChild(block.children[0]);
+                        }
+                    });
                 }
             }
         },
@@ -1347,21 +1414,19 @@
                     type: "string",
                     name: "siteHeaderName",
                     description: "Назва сайту зверху:",
-                    defaultValue: "НЗ",
+                    defaultValue: "НЗ"
                 },
                 {
                     type: "boolean",
                     name: "changeVisionHide",
                     displayName: "Скрити кнопку \"Людям із порушеннями зору\"",
-                    description: "Ця функція не збільшує потрібні елементи, то навіщо вона?",
-                    defaultValue: false
+                    description: "Ця функція не збільшує потрібні елементи, то навіщо вона?"
                 },
                 {
                     type: "boolean",
                     name: "enableCustomColor",
                     displayName: "Замінити градієнт (картинку) на свій колір",
-                    description: "Включити заміну кольору на свій",
-                    defaultValue: false
+                    description: "Включити заміну кольору на свій"
                 },
                 {
                     type: "color",
@@ -1373,29 +1438,27 @@
                     type: "boolean",
                     name: "headerInvertElements",
                     displayName: "Зробити чорними елементи шапки?",
-                    description: "Деякі кольори фону не поєднуються з білими іконками, тому ця опція зробе їх чорними",
-                    defaultValue: false
+                    description: "Деякі кольори фону не поєднуються з білими іконками, тому ця опція зробе їх чорними"
                 }
             ],
             start: function() {
                 if (!document.querySelector(".h-top")) return;
-                const pluginSettings = settings.plugins[this.name]?.options;
 
-                if (pluginSettings?.siteHeaderName) {
-                    document.querySelector(".logo").textContent = settings.plugins[this.name]?.options?.siteHeaderName;
+                if (getPluginSettings(this.name)?.siteHeaderName) {
+                    document.querySelector(".logo").textContent = getPluginSettings(this.name).siteHeaderName;
                 }
 
-                if (pluginSettings?.changeVisionHide && document.querySelector("#changeVision")) {
+                if (getPluginSettings(this.name)?.changeVisionHide && document.querySelector("#changeVision")) {
                     GM_addStyle(".h-top { height: 1.87rem; }");
                     document.querySelector("#changeVision").remove();
                     document.querySelector(".font-size-btns").remove();
                 }
 
-                if (pluginSettings?.enableCustomColor && pluginSettings?.headerCustomColor) {
-                    document.querySelector(".h-top").style.background = pluginSettings.headerCustomColor;
+                if (getPluginSettings(this.name)?.enableCustomColor && getPluginSettings(this.name)?.headerCustomColor) {
+                    document.querySelector(".h-top").style.background = getPluginSettings(this.name).headerCustomColor;
                 }
 
-                if (pluginSettings?.headerInvertElements) GM_addStyle(`.h-top > * { filter: invert(1); }`);
+                if (getPluginSettings(this.name)?.headerInvertElements) GM_addStyle(`.h-top > * { filter: invert(1); }`);
             }
         },
         {
@@ -1405,13 +1468,10 @@
                 const prevNextButtons = document.querySelector(".prev-next-links-2");
                 if (!prevNextButtons) return;
 
-                GM_addStyle(`
-                #collapseDateSelect {
-                  margin: 4px 0 0 0;
-                }
-                #collapseDateSelect > input {
-                  margin: 0 4px 0 0;
-                }`);
+                GM_addStyle(
+                `#collapseDateSelect { margin: 4px 0 0 0 }
+                 #collapseDateSelect > input { margin: 0 4px 0 0 }`
+                );
 
                 GM_addElement(prevNextButtons, "button", {
                     type: "button",
@@ -1444,11 +1504,62 @@
             }
         },
         {
+            name: "RemoveHolidays",
+            description: "Прибирає вихідні дні з щоденнику та розкладу",
+            options: [
+                {
+                    type: "boolean",
+                    name: "removeSaturday",
+                    displayName: "Прибрати суботу",
+                    description: "Прибирає суботу в щоденнику і розкладі"
+                },
+                {
+                    type: "boolean",
+                    name: "removeSunday",
+                    displayName: "Прибрати неділю",
+                    description: "Прибирає неділю в щоденнику і розкладі"
+                }
+            ],
+            start: function() {
+                const diaryItems = document.querySelector(".dn-items");
+                const table = document.querySelector("table.schedule-table.st-student");
+
+                GM_addStyle(".schedule-table { width: 100% }");
+
+                function deleteColumn(element) {
+                    var idx = element.cellIndex;
+                    var total_row = table.rows;
+                    for (var i = 0; i < total_row.length; i++) {
+                        if (total_row[i].cells.length > 1) {
+                            total_row[i].deleteCell(idx);
+                        }
+                    }
+                }
+
+                if (getPluginSettings(this.name)?.removeSaturday) {
+                    if (diaryItems) document.evaluate("//h3[contains(., 'субота')]", document, null, XPathResult.ANY_TYPE, null)?.iterateNext().parentNode.parentNode.remove();
+                    if (table) {
+                        let row = document.evaluate("//span[contains(., 'субота')]", document, null, XPathResult.ANY_TYPE, null)?.iterateNext().parentNode;
+                        deleteColumn(row);
+                    }
+                }
+
+                if (getPluginSettings(this.name)?.removeSunday) {
+                    if (diaryItems) document.evaluate("//h3[contains(., 'неділя')]", document, null, XPathResult.ANY_TYPE, null)?.iterateNext().parentNode.parentNode.remove();
+                    if (table) {
+                        let row = document.evaluate("//span[contains(., 'неділя')]", document, null, XPathResult.ANY_TYPE, null)?.iterateNext().parentNode;
+                        deleteColumn(row);
+                    }
+                }
+            }
+        },
+        {
             name: "LogoutConfirm",
             description: "Додає запитання перед виходом з акаунту",
             start: function() {
                 const logoutButton = document.querySelector("a[href='/logout']");
                 if (logoutButton) {
+                    logoutButton.removeAttribute("data-method");
                     logoutButton.href = "#";
                     logoutButton.addEventListener("click", () => {
                         const exitConfirm = confirm("Ви впевнені що хочете вийти з акаунту?");
@@ -1456,17 +1567,69 @@
                     });
                 }
             }
+        },
+        {
+            name: "LessonSearch",
+            description: "Замінює непотрібний фільтр предмету у щоденнику, на більш зручніший пошук, який шукає не тільки за назвою предмета.",
+            start: function() {
+                let diaryFilterForm = document.querySelector("#diary-filter-form");
+                let diaryItems = document.querySelector(".dn-items");
+                if (!diaryFilterForm) return;
+
+                let panel = diaryFilterForm.parentNode;
+                diaryFilterForm.remove();
+
+                let searchBox = GM_addElement("input", {
+                    type: "text",
+                    placeholder: "Пошук",
+                });
+
+                searchBox.addEventListener("input", () => {
+                    let text = searchBox.value.toLowerCase();
+
+                    diaryItems.childNodes.forEach(day => {
+                        if (!day.classList?.contains("dn-item")) return;
+                        let lessons = day.children[1];
+
+                        lessons.childNodes.forEach(lesson => {
+                            if (!lesson.classList?.contains("clear")) return;
+                            if (text && !lesson.innerText?.toLowerCase()?.includes(text)) {
+                                lesson.classList.add("hide");
+                            } else {
+                                lesson.classList.remove("hide");
+                            }
+                        });
+                    });
+                });
+
+                panel.insertBefore(searchBox, panel.children[0]);
+            }
+        },
+        {
+            name: "oneko",
+            description: "Кішка слідкує за мишкою",
+            start: function() {
+                fetch("https://raw.githubusercontent.com/adryd325/oneko.js/d7e5e3249206a61011978945e72a9c652d449ef3/oneko.js")
+                    .then(x => x.text())
+                    .then(s => s.replace("./oneko.gif", "https://raw.githubusercontent.com/adryd325/oneko.js/d7e5e3249206a61011978945e72a9c652d449ef3/oneko.gif")
+                          .replace("(isReducedMotion)", "(false)"))
+                    .then(eval); // eslint-disable-line no-eval
+            }
         }
     ];
 
-    function startPlugin(p) {
+    async function startPlugin(p) {
         try {
-            p.start();
+            await p.start();
             return true;
         } catch (e) {
             l.error(`Failed to start plugin ${p.name}\n`, e);
             return false;
         }
+    }
+
+    function getPluginSettings(p) {
+        return settings.plugins[p]?.options;
     }
 
     function isPluginEnabled(p) {
@@ -1475,24 +1638,23 @@
         );
     }
 
-    function startAllPlugins() {
+    async function startAllPlugins() {
         for (const plugin of Plugins.sort((a) => a.required) ) { // required plugins loads after not required
             if (isPluginEnabled(plugin.name)) {
-                startPlugin(plugin);
+                await startPlugin(plugin);
             }
         }
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
         l.info("DOM Content loaded, starting plugins...");
-        await startAllPlugins();
+        startAllPlugins();
         document.querySelector("html").style.background = null;
         document.querySelector("html").style.opacity = null;
         l.info("Plugins started. Page displayed.");
     })
 
     window.addEventListener("load", () => {
-        l.debug(GM_getValue("settings"));
         l.info("Page loaded.");
     });
 })();
